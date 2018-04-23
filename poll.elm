@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 main =
   Html.beginnerProgram { model = model, view = view, update = update }
 
+--Define Model
 type alias Model =
   { question : String
   , choice1 : String
@@ -15,12 +16,24 @@ type alias Model =
   , answer : Int
   }
 
---MODEL
+--MODEL (Data)
+
+--Set as Type Model
 model : Model
+--Instance Variables , Instanciate
 model =
   Model "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 1
 
---UPDATE
+intro : String
+intro =  """
+
+CS152 Project
+
+"""
+
+--UPDATE (Change Data)
+-- Define Msg
+-- Msg is signal to the system
 type Msg = 
   Submit 
   | SetQuestion String
@@ -34,6 +47,7 @@ update msg model =
     SetQuestion q -> {model | question = q}
     SetAnswer int ans-> 
       case int of
+      --Generate Clone Copy of Model
       1 -> { model | choice1 = ans}
       2 -> { model | choice2 = ans}
       3 -> { model | choice3 = ans}
@@ -41,24 +55,29 @@ update msg model =
       _ -> { model | choice1 = ans}
     SetCorrectAnswer num -> {model | answer = num}
 
---VIEW
+--VIEW (Print out the data)
 view : Model -> Html Msg
 view model =
   div []
-    [ input [placeholder "Enter your question here.", onInput SetQuestion] []
+    [ 
+      br [] []
+    , input [placeholder "Enter your question here.", onInput SetQuestion] []
     , question "A1" 1
     , question "A2" 2
     , question "A3" 3
     , question "A4" 4
     , button [ onClick Submit ] [ text "Submit" ]
+    , br [] [] , br [] []
     , div [] [text model.question]
     , div [] [text model.choice1]
     , div [] [text model.choice2]
     , div [] [text model.choice3]
     , div [] [text model.choice4]
+    , br [] []
     , div [] [text (toString model.answer)]
     ]
 
+-- Radio Button
 radio : String -> Int -> Html Msg
 radio value msg =
   label
@@ -68,6 +87,8 @@ radio value msg =
     , text value
     ]
 
+-- (Radio Button + Text Box)
+-- Takes in String and Int
 question : String -> Int -> Html Msg
 question name num =
   fieldset []
