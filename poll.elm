@@ -28,10 +28,10 @@ model : Model
 model =
   Model "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 1
 
-intro : String
-intro =  """
-CS152 Project
-"""
+
+
+
+
 
 --UPDATE (Change Data)
 -- Define Msg
@@ -41,11 +41,6 @@ type Msg =
   | SetQuestion String --sets a new question string
   | SetAnswer Int String --sets a new answer string
   | SetCorrectAnswer Int --sets a new answer index (1 for first answer, x for xth answer)
-
-
-
-
-
 
 --Update will take a message signal based on what kind of messgae the view section has given
 --The common property with all of them is that they may pass parameters of their own, and they replace the model data with
@@ -82,22 +77,25 @@ view : Model -> Html Msg
 view model =
   div [] --View is literally one giant hierarchy of HTML. The first [] is for attributes, and the second [] is for content.
     [ 
-      br [] [] --We use an empty br to break down into a new line, or provide spacing.
+    br [] [] --We use an empty br to break down into a new line, or provide spacing.
+    --Beginning of Questioner's POV
     , fieldset [] 
         [
-        input [placeholder "Enter your question here.", onInput SetQuestion] []
-        , br [][], br [][], div [][text "Set one answer as the correct answer."], br [][]
-        , question "question" "A1" 1
+        div [] [ text "Question ", input [placeholder "Enter your question here.", onInput SetQuestion] []]
+        , br [][], div [][text "Set one answer as the correct answer."], br [][]
+        , question "A1" 1
         , br [][]
-        , question "question" "A2" 2
+        , question "A2" 2
         , br [][]
-        , question "question" "A3" 3
+        , question "A3" 3
         , br [][]
-        , question "question" "A4" 4
+        , question "A4" 4
         , br [][]
         , button [ onClick Submit ] [ text "Submit" ]
         ]
     , br [] [] , br [] []
+    --End of Questioners POV
+    --Model contents preview.
     , fieldset []
         [
         div [] [text model.question]
@@ -108,20 +106,21 @@ view model =
         , div [] [text ("The current answer is " ++ (toString model.answerIndex) ++ ".")]
         ]
     , br [] []
+    --End of model contents preview.
     ]
 
 -- (Radio Button + Text Box)
 {- Radio Buttons use groupNames to exclude other button in the same group, textValue to provide a text paired up with it,
-and newAnswerIndex which takes an int for the new answer index-}
--- Takes in groupName to pass into radio, takes in a textValue to assign that button, newAnswerIndex is the new answer
-question : String -> String -> Int -> Html Msg
-question groupName textValue newAnswerIndex =
+and newAnswerIndex which takes an int for the new answer index
+Takes in groupName to pass into radio, takes in a textValue to assign that button, newAnswerIndex is the new answer -}
+question : String -> Int -> Html Msg
+question textValue newAnswerIndex =
   div []
         [ 
           --beginning of radio button
           label
            [ style [("padding", "20px")]]
-           [ input [ type_ "radio", name groupName, onClick (SetCorrectAnswer newAnswerIndex)] [], text textValue]
+           [ input [ type_ "radio", name "question", onClick (SetCorrectAnswer newAnswerIndex)] [], text textValue]
           --ending of radio button
         , input [ placeholder "Enter your answer here.", onInput (SetAnswer newAnswerIndex)] []
         ]
