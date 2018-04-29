@@ -26,9 +26,7 @@ model =
 
 intro : String
 intro =  """
-
 CS152 Project
-
 """
 
 --UPDATE (Change Data)
@@ -62,10 +60,10 @@ view model =
     [ 
       br [] []
     , input [placeholder "Enter your question here.", onInput SetQuestion] []
-    , question "A1" 1
-    , question "A2" 2
-    , question "A3" 3
-    , question "A4" 4
+    , question "question" "A1" 1
+    , question "question" "A2" 2
+    , question "question" "A3" 3
+    , question "question" "A4" 4
     , button [ onClick Submit ] [ text "Submit" ]
     , br [] [] , br [] []
     , div [] [text model.question]
@@ -78,20 +76,20 @@ view model =
     ]
 
 -- Radio Button
-radio : String -> Int -> Html Msg
-radio value msg =
+radio : String -> String -> Int -> Html Msg
+radio groupName value msg =
   label
     [ style [("padding", "20px")]
     ]
-    [ input [ type_ "radio", name "answers", onClick (SetCorrectAnswer msg)] []
+    [ input [ type_ "radio", name groupName, onClick (SetCorrectAnswer msg)] []
     , text value
     ]
 
 -- (Radio Button + Text Box)
 -- Takes in String and Int
-question : String -> Int -> Html Msg
-question name num =
+question : String -> String -> Int -> Html Msg
+question groupName name num =
   fieldset []
-        [ radio name (num)
+        [ radio groupName name (num)
         , input [ placeholder "Enter your answer here.", onInput (SetAnswer num)] []
         ]
