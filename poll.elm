@@ -10,6 +10,7 @@ main =
 --Generating a new copy of that object but which shares memory with the original record, except for the changed values.
 type alias Model =
   { question : String
+  --Questioner's POV
   --String values for questions
   , questionerChoice1 : String
   , questionerChoice2 : String
@@ -17,6 +18,7 @@ type alias Model =
   , questionerChoice4 : String
   --answer index (1 for first answer, x for xth answer)
   , answerIndex : Int
+  --Answerer's POV
   }
 
 --MODEL (Data)
@@ -40,6 +42,11 @@ type Msg =
   | SetAnswer Int String --sets a new answer string
   | SetCorrectAnswer Int --sets a new answer index (1 for first answer, x for xth answer)
 
+
+
+
+
+
 --Update will take a message signal based on what kind of messgae the view section has given
 --The common property with all of them is that they may pass parameters of their own, and they replace the model data with
 --an updated copy of itself.
@@ -61,6 +68,11 @@ update msg model =
       _ -> { model | questionerChoice1 = ans} --We're setting choice 1 as the default choice if anything goes wrong
     SetCorrectAnswer num -> {model | answerIndex = num}
 
+
+
+
+
+
 {-VIEW (Print out the data)
 View's job is to interpret the model every time it is updated. We will take the date from model and display it in GUI
 View's second job is to provide controls to the user to update the model. This is done through text fields and buttons
@@ -71,29 +83,31 @@ view model =
   div [] --View is literally one giant hierarchy of HTML. The first [] is for attributes, and the second [] is for content.
     [ 
       br [] [] --We use an empty br to break down into a new line, or provide spacing.
-    , input [placeholder "Enter your question here.", onInput SetQuestion] []
-    , question "question" "A1" 1
-    , question "question" "A2" 2
-    , question "question" "A3" 3
-    , question "question" "A4" 4
-    , button [ onClick Submit ] [ text "Submit" ]
+    , fieldset [] 
+        [
+        input [placeholder "Enter your question here.", onInput SetQuestion] []
+        , br [][], br [][], div [][text "Set one answer as the correct answer."], br [][]
+        , question "question" "A1" 1
+        , br [][]
+        , question "question" "A2" 2
+        , br [][]
+        , question "question" "A3" 3
+        , br [][]
+        , question "question" "A4" 4
+        , br [][]
+        , button [ onClick Submit ] [ text "Submit" ]
+        ]
     , br [] [] , br [] []
-    , modelValues
+    , fieldset []
+        [
+        div [] [text model.question]
+        , div [] [text model.questionerChoice1]
+        , div [] [text model.questionerChoice2]
+        , div [] [text model.questionerChoice3]
+        , div [] [text model.questionerChoice4]
+        , div [] [text ("The current answer is " ++ (toString model.answerIndex) ++ ".")]
+        ]
     , br [] []
-    ]
-
-{-This is a function that takes no parameters and displays the current values of the model. This is not part of the main
-application and is more useful for just debugging in general. -}
-modelValues : Html Msg
-modelValues = 
-  fieldset []
-    [
-      div [] [text model.question]
-    , div [] [text model.questionerChoice1]
-    , div [] [text model.questionerChoice2]
-    , div [] [text model.questionerChoice3]
-    , div [] [text model.questionerChoice4]
-    , div [] [text ("The current answer is " ++ (toString model.answerIndex) ++ ".")]
     ]
 
 -- (Radio Button + Text Box)
@@ -102,7 +116,7 @@ and newAnswerIndex which takes an int for the new answer index-}
 -- Takes in groupName to pass into radio, takes in a textValue to assign that button, newAnswerIndex is the new answer
 question : String -> String -> Int -> Html Msg
 question groupName textValue newAnswerIndex =
-  fieldset []
+  div []
         [ 
           --beginning of radio button
           label
