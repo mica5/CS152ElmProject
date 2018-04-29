@@ -67,7 +67,7 @@ update msg model =
       case model.state of
       Questioning -> {model | state = Answering}
       Answering -> {model | state = Results}
-      Results -> {model | state = Questioning}
+      Results -> Model Questioning "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 1 0 0 0 0 0
     SetQuestion q -> {model | question = q}
     SetAnswer int ans-> 
       case int of
@@ -115,13 +115,13 @@ questionView model =
         [
         div [] [ text "Question ", input [placeholder "Enter your question here.", onInput SetQuestion] []]
         , br [][], div [][text "Set one answer as the correct answer."], br [][]
-        , question "A1" 1
+        , question "A" 1
         , br [][]
-        , question "A2" 2
+        , question "B" 2
         , br [][]
-        , question "A3" 3
+        , question "C" 3
         , br [][]
-        , question "A4" 4
+        , question "D" 4
         , br [][]
         , button [ onClick Submit ] [ text "Submit" ]
         ]
@@ -131,11 +131,11 @@ questionView model =
     , fieldset []
         [
         div [] [text model.question]
-        , div [] [text model.questionerChoice1]
-        , div [] [text model.questionerChoice2]
-        , div [] [text model.questionerChoice3]
-        , div [] [text model.questionerChoice4]
-        , div [] [text ("The current answer is " ++ (toString model.answerIndex) ++ ".")]
+        , div [] [text ("A.) " ++ model.questionerChoice1)]
+        , div [] [text ("B.) " ++ model.questionerChoice2)]
+        , div [] [text ("C.) " ++ model.questionerChoice3)]
+        , div [] [text ("D.) " ++ model.questionerChoice4)]
+        , div [] [text ("The correct answer is " ++ (indexToLetter model.answerIndex) ++ ".")]
         ]
     , br [] []
     --End of model contents preview.
@@ -146,25 +146,58 @@ answerView model =
   div[]
     [
     br [][]
-    , button [ onClick Submit ] [ text "Vote" ]
-    , button [ onClick Submit ] [ text "Done" ]
     , fieldset []
         [
         div [] [text model.question]
+        , br [][]
         , answer ("A.) " ++ model.questionerChoice1) 1
+        , br [][]
         , answer ("B.) " ++ model.questionerChoice2) 2
+        , br [][]
         , answer ("C.) " ++ model.questionerChoice3) 3
+        , br [][]
         , answer ("D.) " ++ model.questionerChoice4) 4
+        , br [][]
+        , button [ onClick Answer ] [ text "Vote" ]
         ]
     , br [] []
+    , button [ onClick Submit ] [ text "Done" ]
     ]
 
 resultView model =
   div[]
     [
     br [][]
+    , fieldset []
+        [
+        div [] [text "Results:"]
+        , div [] [text ("Votes for A: " ++ (toString model.answerChoice1))]
+        , div [] [text ("Votes for B: " ++ (toString model.answerChoice2))]
+        , div [] [text ("Votes for C: " ++ (toString model.answerChoice3))]
+        , div [] [text ("Votes for D: " ++ (toString model.answerChoice4))]
+        ]
+    , br [][]
+    , fieldset []
+        [
+        div [] [text model.question]
+        , div [] [text ("A.) " ++ model.questionerChoice1)]
+        , div [] [text ("B.) " ++ model.questionerChoice2)]
+        , div [] [text ("C.) " ++ model.questionerChoice3)]
+        , div [] [text ("D.) " ++ model.questionerChoice4)]
+        , div [] [text ("The correct answer is " ++ (indexToLetter model.answerIndex) ++ ".")]
+        ]
+    , br [] []
     , button [ onClick Submit ] [ text "Start Over" ]
     ]
+
+indexToLetter : Int -> String
+indexToLetter index =
+  case index of
+  1 -> "A"
+  2 -> "B"
+  3 -> "C"
+  4 -> "D"
+  _ -> ""
 
 -- (Radio Button + Text Box)
 {- Radio Buttons use groupNames to exclude other button in the same group, textValue to provide a text paired up with it,
