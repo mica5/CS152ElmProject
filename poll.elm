@@ -1,4 +1,3 @@
---We're gonna use: Buttons, Radio-Buttons, and Text Fields
 import Html exposing (..)
 import Html.Events exposing (..)
 import Html.Attributes exposing (..)
@@ -40,7 +39,7 @@ type alias Model =
 model : Model
 --Instance Variables , Instantiate
 model =
-  Model Questioning "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 1 0 0 0 0 0
+  Model Questioning "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 4 0 0 0 0 0
 
 
 
@@ -65,7 +64,7 @@ update msg model =
   case msg of
     Submit -> 
       case model.state of
-      Questioning -> {model | state = Answering}
+      Questioning -> {model | state = Answering, tempChosen = ((model.answerIndex % 4) + 1)}
       Answering -> {model | state = Results}
       Results -> Model Questioning "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 1 0 0 0 0 0
     SetQuestion q -> {model | question = q}
@@ -210,7 +209,7 @@ question textValue newAnswerIndex =
           --beginning of radio button
           label
            [ style [("padding", "20px")]]
-           [ input [ type_ "radio", name "question", onClick (SetCorrectAnswer newAnswerIndex)] [], text textValue]
+           [ input [ type_ "radio", name "question", checked True, onClick (SetCorrectAnswer newAnswerIndex)] [], text textValue]
           --ending of radio button
         , input [ placeholder "Enter your answer here.", onInput (SetAnswer newAnswerIndex)] []
         ]
@@ -222,6 +221,6 @@ answer textValue newAnswerIndex =
           --beginning of radio button
           label
            [ style [("padding", "20px")]]
-           [ input [ type_ "radio", name "answer", onClick (SetChosenAnswer newAnswerIndex)] [], text textValue]
+           [ input [ type_ "radio", name "answer", checked True, onClick (SetChosenAnswer newAnswerIndex)] [], text textValue]
           --ending of radio button 
         ]
