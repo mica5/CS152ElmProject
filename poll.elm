@@ -40,7 +40,7 @@ type alias Model =
 model : Model
 --Instance Variables , Instantiate
 model =
-  Model Questioning "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 1 0 0 0 0 0
+  Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0
 
 
 
@@ -67,7 +67,7 @@ update msg model =
       case model.state of
       Questioning -> {model | state = Answering}
       Answering -> {model | state = Results}
-      Results -> Model Questioning "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 1 0 0 0 0 0
+      Results -> Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0
     SetQuestion q -> {model | question = q}
     SetAnswer int ans-> 
       case int of
@@ -150,13 +150,13 @@ answerView model =
         [
         div [] [text model.question]
         , br [][]
-        , answer ("A.) " ++ model.questionerChoice1) 1
+        , answer ("A ) " ++ model.questionerChoice1) 1
         , br [][]
-        , answer ("B.) " ++ model.questionerChoice2) 2
+        , answer ("B ) " ++ model.questionerChoice2) 2
         , br [][]
-        , answer ("C.) " ++ model.questionerChoice3) 3
+        , answer ("C ) " ++ model.questionerChoice3) 3
         , br [][]
-        , answer ("D.) " ++ model.questionerChoice4) 4
+        , answer ("D ) " ++ model.questionerChoice4) 4
         , br [][]
         , button [ onClick Answer ] [ text "Vote" ]
         ]
@@ -180,10 +180,10 @@ resultView model =
     , fieldset []
         [
         div [] [text model.question]
-        , div [] [text ("A.) " ++ model.questionerChoice1)]
-        , div [] [text ("B.) " ++ model.questionerChoice2)]
-        , div [] [text ("C.) " ++ model.questionerChoice3)]
-        , div [] [text ("D.) " ++ model.questionerChoice4)]
+        , div [] [text ("A ) " ++ model.questionerChoice1)]
+        , div [] [text ("B ) " ++ model.questionerChoice2)]
+        , div [] [text ("C ) " ++ model.questionerChoice3)]
+        , div [] [text ("D ) " ++ model.questionerChoice4)]
         , div [] [text ("The correct answer is " ++ (indexToLetter model.answerIndex) ++ ".")]
         ]
     , br [] []
