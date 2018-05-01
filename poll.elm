@@ -39,7 +39,7 @@ type alias Model =
 model : Model
 --Instance Variables , Instantiate
 model =
-  Model Questioning "Your question will show here." "A1 goes here." "A2 goes here." "A3 goes here." "A4 goes here." 4 0 0 0 0 0
+  Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 4 0 0 0 0 0
 
 
 
@@ -130,10 +130,10 @@ questionView model =
     , fieldset []
         [
         div [] [text model.question]
-        , div [] [text ("A.) " ++ model.questionerChoice1)]
-        , div [] [text ("B.) " ++ model.questionerChoice2)]
-        , div [] [text ("C.) " ++ model.questionerChoice3)]
-        , div [] [text ("D.) " ++ model.questionerChoice4)]
+        , div [] [text ("A ) " ++ model.questionerChoice1)]
+        , div [] [text ("B ) " ++ model.questionerChoice2)]
+        , div [] [text ("C ) " ++ model.questionerChoice3)]
+        , div [] [text ("D ) " ++ model.questionerChoice4)]
         , div [] [text ("The correct answer is " ++ (indexToLetter model.answerIndex) ++ ".")]
         ]
     , br [] []
