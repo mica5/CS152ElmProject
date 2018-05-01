@@ -2,12 +2,12 @@
 
 A polling application written in programming language Elm.
 
-# Install
+## Install
 
-This guide will give you instructions on how to install Elm.
-https://guide.elm-lang.org/install.html
+This guide will give you instructions on how to install Elm : https://guide.elm-lang.org/install.html
 
-# Elm to HTML
+## Elm to HTML
+
 To compile Elm into an HTML, run this in terminal.
 
     elm make (Name of File).elm --output (Name of Application).html
