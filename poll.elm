@@ -5,6 +5,7 @@ import Html.Events exposing (..)
 import Html.Attributes exposing (..)
 
 port clearAnswerButtons: Bool -> Cmd msg
+port focusOnQuestionText: Bool -> Cmd msg
 
 main =
   Html.program
@@ -17,7 +18,7 @@ main =
 
 type State =
     Questioning
-    | Answering
+    | SubmittingVotes
     | Results
 
 --Define Model. Model is similar to a struct in C, or an object in JS, but it is immutable. Elm gets around this by
@@ -45,7 +46,7 @@ type alias Model =
   }
 
 init: (Model, Cmd Msg)
-init = model ! []
+init = model ! [focusOnQuestionText True]
 
 --MODEL (Data)
 --Set as Type Model
@@ -78,9 +79,12 @@ update msg model =
   case msg of
     Submit -> 
       case model.state of
-        Questioning -> {model | state = Answering, tempChosen = ((model.answerIndex % 4) + 1)} ! []
-        Answering -> {model | state = Results} ! []
-        Results -> (Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0) ! []
+        Questioning -> {model | state = SubmittingVotes, tempChosen = ((model.answerIndex % 4) + 1)} ! [focusOnQuestionText True]
+        SubmittingVotes -> {model | state = Results} ! []
+        Results -> (
+            (Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0),
+            Cmd.batch [focusOnQuestionText True]
+          )
     SetQuestion q -> {model | question = q} ! []
     SetAnswer int ans->
       let newModel =
@@ -120,7 +124,7 @@ view: Model -> Html Msg
 view model = 
   case model.state of
     Questioning -> questionView model
-    Answering -> answerView model
+    SubmittingVotes -> submitVotesView model
     Results -> resultView model
 
 questionView : Model -> Html Msg
@@ -132,7 +136,7 @@ questionView model =
      --Beginning of Questioner's POV
     , fieldset [] 
         [
-        div [] [ text "Question ", input [placeholder "Enter your question here.", onInput SetQuestion] []]
+        div [] [ text "Question ", input [placeholder "Enter your question here.", onInput SetQuestion, id "questionText"] []]
         , br [][], div [][text "Set one answer as the correct answer."], br [][]
         , question "A" 1
         , br [][]
@@ -160,8 +164,8 @@ questionView model =
     --End of model contents preview.
     ]
 
-answerView: Model -> Html Msg
-answerView model = 
+submitVotesView: Model -> Html Msg
+submitVotesView model = 
   div[]
     [
     br [][]
@@ -169,45 +173,52 @@ answerView model =
         [
         div [] [text model.question]
         , br [][]
-        , answerRadioButton ("A ) " ++ model.questionerChoice1) 1
+        , answerRadioButton ("A ) " ++ model.questionerChoice1) 1 "A"
         , br [][]
-        , answerRadioButton ("B ) " ++ model.questionerChoice2) 2
+        , answerRadioButton ("B ) " ++ model.questionerChoice2) 2 "B"
         , br [][]
-        , answerRadioButton ("C ) " ++ model.questionerChoice3) 3
+        , answerRadioButton ("C ) " ++ model.questionerChoice3) 3 "C"
         , br [][]
-        , answerRadioButton ("D ) " ++ model.questionerChoice4) 4
+        , answerRadioButton ("D ) " ++ model.questionerChoice4) 4 "D"
         , br [][]
-        , button [ onClick Answer ] [ text "Vote" ]
+        , button [ onClick Answer, id "voteButton" ] [ text "Vote" ]
         ]
     , br [] []
     , button [ onClick Submit ] [ text "Done" ]
     ]
 
 resultView model =
-  div[]
-    [
-    br [][]
-    , fieldset []
-        [
-        div [] [text "Results:"]
-        , div [] [text ("Votes for A: " ++ (toString model.answerChoice1))]
-        , div [] [text ("Votes for B: " ++ (toString model.answerChoice2))]
-        , div [] [text ("Votes for C: " ++ (toString model.answerChoice3))]
-        , div [] [text ("Votes for D: " ++ (toString model.answerChoice4))]
-        ]
-    , br [][]
-    , fieldset []
-        [
-        div [] [text model.question]
-        , div [] [text ("A ) " ++ model.questionerChoice1)]
-        , div [] [text ("B ) " ++ model.questionerChoice2)]
-        , div [] [text ("C ) " ++ model.questionerChoice3)]
-        , div [] [text ("D ) " ++ model.questionerChoice4)]
-        , div [] [text ("The correct answer is " ++ (indexToLetter model.answerIndex) ++ ".")]
-        ]
-    , br [] []
-    , button [ onClick Submit ] [ text "Start Over" ]
-    ]
+  let
+    totalVotes = toFloat (model.answerChoice1 + model.answerChoice2 + model.answerChoice3 + model.answerChoice4)
+    proportionAnswerChoice1 = toString (round ((toFloat model.answerChoice1) / totalVotes * 100))
+    proportionAnswerChoice2 = toString (round ((toFloat model.answerChoice2) / totalVotes * 100))
+    proportionAnswerChoice3 = toString (round ((toFloat model.answerChoice3) / totalVotes * 100))
+    proportionAnswerChoice4 = toString (round ((toFloat model.answerChoice4) / totalVotes * 100))
+  in
+    div[]
+      [
+      br [][]
+      , fieldset []
+          [
+          div [] [text "Results:"]
+          , div [] [text ("Votes for A: " ++ (toString model.answerChoice1) ++ " (" ++ proportionAnswerChoice1 ++ "%)")]
+          , div [] [text ("Votes for B: " ++ (toString model.answerChoice2) ++ " (" ++ proportionAnswerChoice2 ++ "%)")]
+          , div [] [text ("Votes for C: " ++ (toString model.answerChoice3) ++ " (" ++ proportionAnswerChoice3 ++ "%)")]
+          , div [] [text ("Votes for D: " ++ (toString model.answerChoice4) ++ " (" ++ proportionAnswerChoice4 ++ "%)")]
+          ]
+      , br [][]
+      , fieldset []
+          [
+          div [] [text model.question]
+          , div [] [text ("A ) " ++ model.questionerChoice1)]
+          , div [] [text ("B ) " ++ model.questionerChoice2)]
+          , div [] [text ("C ) " ++ model.questionerChoice3)]
+          , div [] [text ("D ) " ++ model.questionerChoice4)]
+          , div [] [text ("The correct answer is " ++ (indexToLetter model.answerIndex) ++ ".")]
+          ]
+      , br [] []
+      , button [ onClick Submit ] [ text "Start Over" ]
+      ]
 
 indexToLetter : Int -> String
 indexToLetter index =
@@ -229,18 +240,26 @@ question textValue newAnswerIndex =
           --beginning of radio button
           label
            [ style [("padding", "20px")]]
-           [ input [ type_ "radio", name "question", checked True, onClick (SetCorrectAnswer newAnswerIndex)] [], text textValue]
+           [ input [ type_ "radio", name "question", checked False, onClick (SetCorrectAnswer newAnswerIndex)] [], text textValue]
           --ending of radio button
         , input [ placeholder "Enter your answer here.", onInput (SetAnswer newAnswerIndex)] []
         ]
 
-answerRadioButton : String -> Int -> Html Msg
-answerRadioButton textValue newAnswerIndex =
+answerRadioButton : String -> Int -> String -> Html Msg
+answerRadioButton textValue newAnswerIndex idString =
   div []
         [
           --beginning of radio button
-          label
-           [ style [("padding", "20px")]]
-           [ input [ type_ "radio", name "answer", class "answerButton", checked True, onClick (SetChosenAnswer newAnswerIndex)] [], text textValue]
-          --ending of radio button 
+          label [ style [("padding", "20px")]] [
+            input [
+              type_ "radio",
+              name "answer",
+              class "answerButton",
+              checked False,
+              onClick (SetChosenAnswer newAnswerIndex),
+              id idString
+            ] [],
+            text textValue
+          ]
+          -- ending of radio button
         ]
