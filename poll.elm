@@ -17,9 +17,9 @@ main =
       }
 
 type State =
-    Questioning
-    | SubmittingVotes
-    | Results
+    CreateQuestionState
+    | SubmittingVotesState
+    | ReviewResultsState
 
 --Define Model. Model is similar to a struct in C, or an object in JS, but it is immutable. Elm gets around this by
 --Generating a new copy of that object but which shares memory with the original record, except for the changed values.
@@ -39,10 +39,10 @@ type alias Model =
   , answerIndex : Int
   --Answerer's POV
   , tempChosen : Int
-  , answerChoice1 : Int
-  , answerChoice2 : Int
-  , answerChoice3 : Int
-  , answerChoice4 : Int
+  , numberVotesFor1 : Int
+  , numberVotesFor2 : Int
+  , numberVotesFor3 : Int
+  , numberVotesFor4 : Int
   }
 
 init: (Model, Cmd Msg)
@@ -53,7 +53,7 @@ init = model ! [focusOnQuestionText True]
 model : Model
 --Instance Variables , Instantiate
 model =
-  Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 4 0 0 0 0 0
+  Model CreateQuestionState "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 4 0 0 0 0 0
 
 
 
@@ -64,7 +64,7 @@ model =
 -- Define Msg
 -- Msg is signal to the system, we use case matching to allow the view section to give a particular signal
 type Msg = 
-  Submit --Submits the current model values and updates it for the answerer's POV
+  GoToNextState --Submits the current model values and updates it for the answerer's POV
   | SetQuestion String --sets a new question string
   | SetAnswer Int String --sets a new answer string
   | SetCorrectAnswer Int --sets a new answer index (1 for first answer, x for xth answer)
@@ -77,12 +77,18 @@ type Msg =
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Submit -> 
+
+    -- GoToNextState is a state machine with a cyclic behavior.
+    GoToNextState ->
       case model.state of
-        Questioning -> {model | state = SubmittingVotes, tempChosen = ((model.answerIndex % 4) + 1)} ! [focusOnQuestionText True]
-        SubmittingVotes -> {model | state = Results} ! []
-        Results -> (
-            (Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0),
+        -- submit a new question for people to vote on.
+        CreateQuestionState -> {model | state = SubmittingVotesState, tempChosen = ((model.answerIndex % 4) + 1)} ! [focusOnQuestionText True]
+        -- finish accepting votes and go to the results page
+        SubmittingVotesState -> {model | state = ReviewResultsState} ! []
+        ReviewResultsState -> (
+            -- reset to a blank model
+            (Model CreateQuestionState "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0),
+            -- focus on the question input text
             Cmd.batch [focusOnQuestionText True]
           )
     SetQuestion q -> {model | question = q} ! []
@@ -102,10 +108,10 @@ update msg model =
     Answer ->
       let newModel =
         case model.tempChosen of
-          1 -> {model | answerChoice1 = model.answerChoice1 + 1}
-          2 -> {model | answerChoice2 = model.answerChoice2 + 1}
-          3 -> {model | answerChoice3 = model.answerChoice3 + 1}
-          4 -> {model | answerChoice4 = model.answerChoice4 + 1}
+          1 -> {model | numberVotesFor1 = model.numberVotesFor1 + 1}
+          2 -> {model | numberVotesFor2 = model.numberVotesFor2 + 1}
+          3 -> {model | numberVotesFor3 = model.numberVotesFor3 + 1}
+          4 -> {model | numberVotesFor4 = model.numberVotesFor4 + 1}
           _ -> model
       in
         (newModel, clearAnswerButtons True)
@@ -123,9 +129,9 @@ necessary and how it works. -}
 view: Model -> Html Msg
 view model = 
   case model.state of
-    Questioning -> questionView model
-    SubmittingVotes -> submitVotesView model
-    Results -> resultView model
+    CreateQuestionState -> questionView model
+    SubmittingVotesState -> submitVotesView model
+    ReviewResultsState -> resultView model
 
 questionView : Model -> Html Msg
 questionView model =
@@ -146,7 +152,7 @@ questionView model =
         , br [][]
         , question "D" 4
         , br [][]
-        , button [ onClick Submit ] [ text "Submit" ]
+        , button [ onClick GoToNextState ] [ text "Submit" ]
         ]
     , br [] [] , br [] []
     --End of Questioners POV
@@ -184,40 +190,33 @@ submitVotesView model =
         , button [ onClick Answer, id "voteButton" ] [ text "Vote" ]
         ]
     , br [] []
-    , button [ onClick Submit ] [ text "Done" ]
+    , button [ onClick GoToNextState ] [ text "Done" ]
     ]
+
+correctMarker answerIndex index =
+  if answerIndex == index then "*" else " "
 
 resultView model =
   let
-    totalVotes = toFloat (model.answerChoice1 + model.answerChoice2 + model.answerChoice3 + model.answerChoice4)
-    proportionAnswerChoice1 = toString (round ((toFloat model.answerChoice1) / totalVotes * 100))
-    proportionAnswerChoice2 = toString (round ((toFloat model.answerChoice2) / totalVotes * 100))
-    proportionAnswerChoice3 = toString (round ((toFloat model.answerChoice3) / totalVotes * 100))
-    proportionAnswerChoice4 = toString (round ((toFloat model.answerChoice4) / totalVotes * 100))
+    totalVotes = toFloat (model.numberVotesFor1 + model.numberVotesFor2 + model.numberVotesFor3 + model.numberVotesFor4)
+    proportionAnswerChoice1 = toString (round ((toFloat model.numberVotesFor1) / totalVotes * 100))
+    proportionAnswerChoice2 = toString (round ((toFloat model.numberVotesFor2) / totalVotes * 100))
+    proportionAnswerChoice3 = toString (round ((toFloat model.numberVotesFor3) / totalVotes * 100))
+    proportionAnswerChoice4 = toString (round ((toFloat model.numberVotesFor4) / totalVotes * 100))
   in
     div[]
       [
       br [][]
       , fieldset []
           [
-          div [] [text "Results:"]
-          , div [] [text ("Votes for A: " ++ (toString model.answerChoice1) ++ " (" ++ proportionAnswerChoice1 ++ "%)")]
-          , div [] [text ("Votes for B: " ++ (toString model.answerChoice2) ++ " (" ++ proportionAnswerChoice2 ++ "%)")]
-          , div [] [text ("Votes for C: " ++ (toString model.answerChoice3) ++ " (" ++ proportionAnswerChoice3 ++ "%)")]
-          , div [] [text ("Votes for D: " ++ (toString model.answerChoice4) ++ " (" ++ proportionAnswerChoice4 ++ "%)")]
+          div [] [text ("Results for question '" ++ model.question ++ "':")]
+          , div [] [text ((toString model.numberVotesFor1) ++ " (" ++ proportionAnswerChoice1 ++ "%) " ++ (correctMarker model.answerIndex 1) ++ " " ++ model.questionerChoice1)]
+          , div [] [text ((toString model.numberVotesFor2) ++ " (" ++ proportionAnswerChoice2 ++ "%) " ++ (correctMarker model.answerIndex 2) ++ " " ++ model.questionerChoice2)]
+          , div [] [text ((toString model.numberVotesFor3) ++ " (" ++ proportionAnswerChoice3 ++ "%) " ++ (correctMarker model.answerIndex 3) ++ " " ++ model.questionerChoice3)]
+          , div [] [text ((toString model.numberVotesFor4) ++ " (" ++ proportionAnswerChoice4 ++ "%) " ++ (correctMarker model.answerIndex 4) ++ " " ++ model.questionerChoice4)]
           ]
       , br [][]
-      , fieldset []
-          [
-          div [] [text model.question]
-          , div [] [text ("A ) " ++ model.questionerChoice1)]
-          , div [] [text ("B ) " ++ model.questionerChoice2)]
-          , div [] [text ("C ) " ++ model.questionerChoice3)]
-          , div [] [text ("D ) " ++ model.questionerChoice4)]
-          , div [] [text ("The correct answer is " ++ (indexToLetter model.answerIndex) ++ ".")]
-          ]
-      , br [] []
-      , button [ onClick Submit ] [ text "Start Over" ]
+      , button [ onClick GoToNextState ] [ text "Start Over" ]
       ]
 
 indexToLetter : Int -> String
