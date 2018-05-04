@@ -10,7 +10,6 @@
         var app = Elm.Poll.fullscreen();
 
         app.ports.clearAnswerButtons.subscribe(function() {
-            console.log("clearing answer buttons");
             $(".answerButton").each(function(){$(this).prop('checked', false)});
         });
 
@@ -18,7 +17,6 @@
             // it's unfortunate that we need this timeout, but elm
             // sends the message before the DOM has rendered.
             setTimeout(function(){
-                console.log("focusing on question text");
                 $("#questionText").focus();
             }, 50);
         });
