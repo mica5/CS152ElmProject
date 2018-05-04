@@ -4,10 +4,7 @@ import Html exposing (..)
 import Html.Events exposing (..)
 import Html.Attributes exposing (..)
 
-port clearAnswerButtons: Model -> Cmd msg
-
-subscriptions: Model -> Cmd Msg
-subscriptions model = clearAnswerButtons model
+port clearAnswerButtons: Bool -> Cmd msg
 
 main =
   Html.program
@@ -15,16 +12,20 @@ main =
       init=init,
       view = view,
       update = update,
-      subscriptions=\_ -> Sub.none
+      subscriptions= \_ -> Sub.none
       }
 
+type State =
+    Questioning
+    | Answering
+    | Results
 
 --Define Model. Model is similar to a struct in C, or an object in JS, but it is immutable. Elm gets around this by
 --Generating a new copy of that object but which shares memory with the original record, except for the changed values.
 type alias Model =
   { 
   --What state the application is in
-    state : String
+    state : State
   --Questioner's POV
   --The Question
   , question : String
@@ -51,7 +52,7 @@ init = model ! []
 model : Model
 --Instance Variables , Instantiate
 model =
-  Model "Questioning" "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 4 0 0 0 0 0
+  Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 4 0 0 0 0 0
 
 
 
@@ -77,10 +78,9 @@ update msg model =
   case msg of
     Submit -> 
       case model.state of
-        "Questioning" -> {model | state = "Answering", tempChosen = ((model.answerIndex % 4) + 1)} ! []
-        "Answering" -> {model | state = "Results"} ! []
-        "Results" -> (Model "Questioning" "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0) ! []
-        _ -> model ! []
+        Questioning -> {model | state = Answering, tempChosen = ((model.answerIndex % 4) + 1)} ! []
+        Answering -> {model | state = Results} ! []
+        Results -> (Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0) ! []
     SetQuestion q -> {model | question = q} ! []
     SetAnswer int ans->
       let newModel =
@@ -104,7 +104,7 @@ update msg model =
           4 -> {model | answerChoice4 = model.answerChoice4 + 1}
           _ -> model
       in
-        (newModel, clearAnswerButtons newModel)
+        (newModel, clearAnswerButtons True)
 
 
 
@@ -119,10 +119,9 @@ necessary and how it works. -}
 view: Model -> Html Msg
 view model = 
   case model.state of
-    "Questioning" -> questionView model
-    "Answering" -> answerView model
-    "Results" -> resultView model
-    _ -> resultView model
+    Questioning -> questionView model
+    Answering -> answerView model
+    Results -> resultView model
 
 questionView : Model -> Html Msg
 questionView model =
