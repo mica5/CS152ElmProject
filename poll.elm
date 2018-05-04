@@ -1,21 +1,30 @@
+port module Poll exposing (..)
+
 import Html exposing (..)
 import Html.Events exposing (..)
 import Html.Attributes exposing (..)
 
-main =
-  Html.beginnerProgram { model = model, view = view, update = update }
+port clearAnswerButtons: Model -> Cmd msg
 
-type State =
-  Questioning
-  | Answering
-  | Results
+subscriptions: Model -> Cmd Msg
+subscriptions model = clearAnswerButtons model
+
+main =
+  Html.program
+      {
+      init=init,
+      view = view,
+      update = update,
+      subscriptions=\_ -> Sub.none
+      }
+
 
 --Define Model. Model is similar to a struct in C, or an object in JS, but it is immutable. Elm gets around this by
 --Generating a new copy of that object but which shares memory with the original record, except for the changed values.
 type alias Model =
   { 
   --What state the application is in
-    state : State
+    state : String
   --Questioner's POV
   --The Question
   , question : String
@@ -34,12 +43,15 @@ type alias Model =
   , answerChoice4 : Int
   }
 
+init: (Model, Cmd Msg)
+init = model ! []
+
 --MODEL (Data)
 --Set as Type Model
 model : Model
 --Instance Variables , Instantiate
 model =
-  Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 4 0 0 0 0 0
+  Model "Questioning" "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 4 0 0 0 0 0
 
 
 
@@ -60,31 +72,39 @@ type Msg =
 --Update will take a message signal based on what kind of messgae the view section has given
 --The common property with all of them is that they may pass parameters of their own, and they replace the model data with
 --an updated copy of itself.
+update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Submit -> 
       case model.state of
-      Questioning -> {model | state = Answering, tempChosen = ((model.answerIndex % 4) + 1)}
-      Answering -> {model | state = Results}
-      Results -> Model Questioning "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0
-    SetQuestion q -> {model | question = q}
-    SetAnswer int ans-> 
-      case int of
-      --Generate Updated Clone Copy of Model, this is Elm's equivalent to using a setter for an object
-      1 -> { model | questionerChoice1 = ans}
-      2 -> { model | questionerChoice2 = ans}
-      3 -> { model | questionerChoice3 = ans}
-      4 -> { model | questionerChoice4 = ans}
-      _ -> { model | questionerChoice1 = ans} --We're setting choice 1 as the default choice if anything goes wrong
-    SetCorrectAnswer num -> {model | answerIndex = num}
-    SetChosenAnswer num -> {model | tempChosen = num}
+        "Questioning" -> {model | state = "Answering", tempChosen = ((model.answerIndex % 4) + 1)} ! []
+        "Answering" -> {model | state = "Results"} ! []
+        "Results" -> (Model "Questioning" "Your question will show here." "A goes here." "B goes here." "C goes here." "D goes here." 1 0 0 0 0 0) ! []
+        _ -> model ! []
+    SetQuestion q -> {model | question = q} ! []
+    SetAnswer int ans->
+      let newModel =
+        case int of
+        --Generate Updated Clone Copy of Model, this is Elm's equivalent to using a setter for an object
+        1 -> { model | questionerChoice1 = ans}
+        2 -> { model | questionerChoice2 = ans}
+        3 -> { model | questionerChoice3 = ans}
+        4 -> { model | questionerChoice4 = ans}
+        _ -> { model | questionerChoice1 = ans} --We're setting choice 1 as the default choice if anything goes wrong
+      in
+        newModel ! []
+    SetCorrectAnswer num -> {model | answerIndex = num} ! []
+    SetChosenAnswer num -> {model | tempChosen = num} ! []
     Answer ->
-      case model.tempChosen of
-        1 -> {model | answerChoice1 = model.answerChoice1 + 1}
-        2 -> {model | answerChoice2 = model.answerChoice2 + 1}
-        3 -> {model | answerChoice3 = model.answerChoice3 + 1}
-        4 -> {model | answerChoice4 = model.answerChoice4 + 1}
-        _ -> model
+      let newModel =
+        case model.tempChosen of
+          1 -> {model | answerChoice1 = model.answerChoice1 + 1}
+          2 -> {model | answerChoice2 = model.answerChoice2 + 1}
+          3 -> {model | answerChoice3 = model.answerChoice3 + 1}
+          4 -> {model | answerChoice4 = model.answerChoice4 + 1}
+          _ -> model
+      in
+        (newModel, clearAnswerButtons newModel)
 
 
 
@@ -99,9 +119,10 @@ necessary and how it works. -}
 view: Model -> Html Msg
 view model = 
   case model.state of
-    Questioning -> questionView model
-    Answering -> answerView model
-    Results -> resultView model
+    "Questioning" -> questionView model
+    "Answering" -> answerView model
+    "Results" -> resultView model
+    _ -> resultView model
 
 questionView : Model -> Html Msg
 questionView model =
@@ -149,13 +170,13 @@ answerView model =
         [
         div [] [text model.question]
         , br [][]
-        , answer ("A ) " ++ model.questionerChoice1) 1
+        , answerRadioButton ("A ) " ++ model.questionerChoice1) 1
         , br [][]
-        , answer ("B ) " ++ model.questionerChoice2) 2
+        , answerRadioButton ("B ) " ++ model.questionerChoice2) 2
         , br [][]
-        , answer ("C ) " ++ model.questionerChoice3) 3
+        , answerRadioButton ("C ) " ++ model.questionerChoice3) 3
         , br [][]
-        , answer ("D ) " ++ model.questionerChoice4) 4
+        , answerRadioButton ("D ) " ++ model.questionerChoice4) 4
         , br [][]
         , button [ onClick Answer ] [ text "Vote" ]
         ]
@@ -214,13 +235,13 @@ question textValue newAnswerIndex =
         , input [ placeholder "Enter your answer here.", onInput (SetAnswer newAnswerIndex)] []
         ]
 
-answer : String -> Int -> Html Msg
-answer textValue newAnswerIndex =
+answerRadioButton : String -> Int -> Html Msg
+answerRadioButton textValue newAnswerIndex =
   div []
         [
           --beginning of radio button
           label
            [ style [("padding", "20px")]]
-           [ input [ type_ "radio", name "answer", checked True, onClick (SetChosenAnswer newAnswerIndex)] [], text textValue]
+           [ input [ type_ "radio", name "answer", class "answerButton", checked True, onClick (SetChosenAnswer newAnswerIndex)] [], text textValue]
           --ending of radio button 
         ]
